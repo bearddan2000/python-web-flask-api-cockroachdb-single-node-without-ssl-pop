@@ -1,0 +1,34 @@
+version: '3'
+services:
+  py-srv:
+    build:
+      context: py-srv
+    ports:
+      - 80:5080
+    command: python app.py
+    depends_on:
+      - db-runner
+    links:
+      - "db:db"
+
+  db:
+    image: cockroachdb/cockroach:v19.2.4
+    container_name: db
+    ports:
+     - "20000:26257"
+     - "8000:8080"
+    command: start --insecure
+
+  db-runner:
+    image: cockroachdb/cockroach:v19.2.4
+    command:
+      - shell
+      - /usr/local/bin/init-data.sh
+      - db:26257
+    volumes:
+     - ./db/init-data.sh:/usr/local/bin/init-data.sh:ro
+     - ./db/sql:/docker-entrypoint-initdb.d
+    depends_on:
+     - db
+    links:
+     - "db:db"
